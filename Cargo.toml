@@ -1,0 +1,6 @@
+﻿[workspace]
+resolver = "3"
+members = [
+    "gd-spout",
+    "spout-sys"
+]
