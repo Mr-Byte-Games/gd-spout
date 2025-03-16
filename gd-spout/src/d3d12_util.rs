@@ -18,4 +18,3 @@ pub fn get_d3d12_device() -> Option<ID3D12Device> {
 
     unsafe { Some(std::mem::transmute(logical_device_id)) }
 }
-
