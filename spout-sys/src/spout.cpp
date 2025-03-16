@@ -38,6 +38,10 @@ bool SpoutDX12::set_sender_name(const std::string &name) const {
 }
 
 bool SpoutDX12::send_resource(ID3D12Resource *resource) {
+    if (resource == nullptr) {
+        return false;
+    }
+
     if (_cachedD3D12Resource.Get() == resource) {
         return _spout->SendDX11Resource(_cachedD3D11Resource.Get());
     }
