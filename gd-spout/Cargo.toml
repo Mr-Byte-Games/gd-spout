@@ -8,5 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 godot = { git = "https://github.com/godot-rust/gdext.git", version = "0.2.4" }
-windows = { version = "0.60.0", features = ["Win32_Graphics_Direct3D12", "Win32_Graphics_Dxgi_Common"] }
 spout-sys = { path = "../spout-sys" }

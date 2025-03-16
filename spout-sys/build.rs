@@ -2,13 +2,17 @@ use std::path::PathBuf;
 
 const SPOUT_DIR: &str = "deps/Spout2";
 
+#[cfg(not(target_os = "windows"))]
+fn main() {}
+
+#[cfg(target_os = "windows")]
 fn main() {
     let build_dir = build_spout();
     let lib_dir = build_dir.join("lib");
     let include_dir = build_dir.join("include");
     let spout_dx12_include_dir = include_dir.join("SpoutDX12");
 
-    cxx_build::bridge("src/lib.rs")
+    cxx_build::bridge("src/spout.rs")
         .include(spout_dx12_include_dir)
         .include("include/")
         .file("src/spout.cpp")
@@ -16,7 +20,7 @@ fn main() {
         .compile("spout");
 
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=lib.rs");
+    println!("cargo:rerun-if-changed=spout.rs");
     println!("cargo:rerun-if-changed=include/library.h");
     println!("cargo:rerun-if-changed=src/library.cpp");
     println!("cargo:rustc-link-lib=Spout");
@@ -25,6 +29,7 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
 }
 
+#[cfg(target_os = "windows")]
 fn build_spout() -> PathBuf {
     cmake::Config::new(SPOUT_DIR)
         .define("SKIP_INSTALL_ALL", "OFF")
