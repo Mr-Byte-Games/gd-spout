@@ -2,9 +2,14 @@
 use crate::d3d12_util;
 use godot::classes::{Node, RenderingServer, Texture2D};
 use godot::prelude::*;
+use std::sync::{Arc, LazyLock};
 
 #[cfg(target_os = "windows")]
 use spout_sys::SpoutDX12;
+
+thread_local! {
+    static RENDERING_DRIVER_D3D12: GString = "d3d12".into();
+}
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
@@ -31,10 +36,10 @@ impl INode for SpoutSender {
 
     #[cfg(target_os = "windows")]
     fn ready(&mut self) {
-        if !RenderingServer::singleton()
-            .get_current_rendering_driver_name()
-            .begins_with("d3d12")
-        {
+        let driver_name = RenderingServer::singleton().get_current_rendering_driver_name();
+        let is_d3d12 = RENDERING_DRIVER_D3D12.with(|driver_d3d12| *driver_d3d12 == driver_name);
+
+        if !is_d3d12 {
             godot_warn!("Rendering driver is not configured to D3D12, SpoutSender is disabled");
             return;
         }
