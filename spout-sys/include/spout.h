@@ -19,6 +19,18 @@ public:
     bool set_sender_name(const std::string &name) const;
     bool send_resource(ID3D12Resource *resource);
 
+    void set_receiver_name(const std::string &name) const;
+    unsigned int get_sender_height() const;
+    unsigned int get_sender_width() const;
+
+    DXGI_FORMAT get_sender_format() const;
+
+    bool is_updated() const;
+
+    bool receive_resource(ID3D12Resource **resource) const;
+
+    bool create_receiver_resource(ID3D12Device *device, ID3D12Resource **resource) const;
+
 private:
     spoutDX12* _spout;
     Microsoft::WRL::ComPtr<ID3D12Resource> _cachedD3D12Resource;
@@ -26,3 +38,4 @@ private:
 };
 
 std::unique_ptr<SpoutDX12> new_spout_dx12();
+uint32_t safe_release(ID3D12Resource *target);

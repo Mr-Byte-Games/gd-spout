@@ -2,7 +2,6 @@
 use crate::d3d12_util;
 use godot::classes::{Node, RenderingServer, Texture2D};
 use godot::prelude::*;
-use std::sync::{Arc, LazyLock};
 
 #[cfg(target_os = "windows")]
 use spout_sys::SpoutDX12;
@@ -13,11 +12,11 @@ thread_local! {
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
-struct SpoutSender {
+pub struct SpoutSender {
     #[export]
-    pub name: GString,
+    name: GString,
     #[export]
-    pub texture: Option<Gd<Texture2D>>,
+    texture: Option<Gd<Texture2D>>,
     #[cfg(target_os = "windows")]
     spout: Option<SpoutDX12>,
     base: Base<Node>,
@@ -32,6 +31,7 @@ impl INode for SpoutSender {
         };
 
         spout.release_sender();
+        spout.close();
     }
 
     #[cfg(target_os = "windows")]
@@ -49,13 +49,13 @@ impl INode for SpoutSender {
             return;
         };
 
-        let callable = self.base().callable("on_post_draw");
         let mut spout = SpoutDX12::new();
         spout.open(device);
         spout.set_sender_name(self.name.to_string());
 
         self.spout = Some(spout);
 
+        let callable = self.base().callable("on_post_draw");
         RenderingServer::singleton().connect("frame_post_draw", &callable);
     }
 }

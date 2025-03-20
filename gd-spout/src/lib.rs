@@ -1,9 +1,12 @@
 #[cfg(target_os = "windows")]
 mod d3d12_util;
-mod sender;
+
+mod node;
+mod resource;
 
 use godot::prelude::*;
-pub use sender::*;
+pub use node::*;
+pub use resource::*;
 
 pub struct GdSpoutExtension;
 
