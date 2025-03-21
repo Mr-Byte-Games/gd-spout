@@ -1,4 +1,4 @@
-﻿use godot::prelude::*;
+use godot::prelude::*;
 
 #[cfg(target_os = "windows")]
 mod dx12;
