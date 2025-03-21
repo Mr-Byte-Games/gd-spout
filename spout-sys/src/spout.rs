@@ -137,8 +137,6 @@ mod ffi {
         type ID3D12Resource;
         type DXGI_FORMAT;
 
-        unsafe fn open(self: &SpoutDX12, device: *mut ID3D12Device) -> bool;
-        fn close(self: &SpoutDX12);
         unsafe fn send_resource(self: Pin<&mut SpoutDX12>, resource: *mut ID3D12Resource) -> bool;
         unsafe fn receive_resource(self: &SpoutDX12, resource: *mut *mut ID3D12Resource) -> bool;
         unsafe fn create_receiver_resource(
@@ -149,14 +147,13 @@ mod ffi {
         fn set_sender_name(self: &SpoutDX12, name: &CxxString) -> bool;
         fn set_receiver_name(self: &SpoutDX12, name: &CxxString);
         fn release_sender(self: &SpoutDX12);
+        fn release_receiver(self: &SpoutDX12);
         fn get_sender_width(self: &SpoutDX12) -> u32;
         fn get_sender_height(self: &SpoutDX12) -> u32;
         fn get_sender_format(self: &SpoutDX12) -> DXGI_FORMAT;
         fn is_updated(self: &SpoutDX12) -> bool;
 
-        fn new_spout_dx12() -> UniquePtr<SpoutDX12>;
-
-        unsafe fn safe_release(resource: *mut ID3D12Resource) -> u32;
+        unsafe fn new_spout_dx12(device: *mut ID3D12Device) -> UniquePtr<SpoutDX12>;
     }
 }
 
@@ -168,18 +165,10 @@ pub struct SpoutDX12 {
 }
 
 impl SpoutDX12 {
-    pub fn new() -> Self {
+    pub fn new(device: NonNull<ID3D12Device>) -> Self {
         Self {
-            inner: ffi::new_spout_dx12(),
+            inner: unsafe { ffi::new_spout_dx12(device.as_ptr()) },
         }
-    }
-
-    pub fn open(&mut self, device: NonNull<ID3D12Device>) -> bool {
-        unsafe { self.inner.open(device.as_ptr()) }
-    }
-
-    pub fn close(&mut self) {
-        self.inner.close()
     }
 
     pub fn set_sender_name(&mut self, name: impl AsRef<[u8]>) -> bool {
@@ -224,6 +213,10 @@ impl SpoutDX12 {
         self.inner.release_sender();
     }
 
+    pub fn release_receiver(&mut self) {
+        self.inner.release_receiver();
+    }
+
     pub fn get_sender_width(&self) -> u32 {
         self.inner.get_sender_width()
     }
@@ -238,15 +231,5 @@ impl SpoutDX12 {
 
     pub fn is_updated(&self) -> bool {
         self.inner.is_updated()
-    }
-}
-
-pub fn release_resource(resource: &mut Option<NonNull<ID3D12Resource>>) {
-    let Some(inner) = resource.take() else {
-        return;
-    };
-
-    unsafe {
-        ffi::safe_release(inner.as_ptr());
     }
 }

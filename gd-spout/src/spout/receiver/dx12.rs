@@ -3,7 +3,7 @@ use crate::spout::receiver::SpoutReceiver;
 use godot::classes::RenderingServer;
 use godot::classes::rendering_device::{DataFormat, TextureSamples, TextureType, TextureUsageBits};
 use godot::prelude::*;
-use spout_sys::{ID3D12Resource, SpoutDX12, release_resource};
+use spout_sys::{ID3D12Resource, SpoutDX12};
 use std::ptr::NonNull;
 
 pub struct D3D12SpoutReceiver {
@@ -15,34 +15,27 @@ pub struct D3D12SpoutReceiver {
 
 impl Drop for D3D12SpoutReceiver {
     fn drop(&mut self) {
-        release_resource(&mut self.texture_resource);
-        self.spout.close();
+        self.spout.release_receiver();
         self.free_godot_resources();
     }
 }
 
 impl D3D12SpoutReceiver {
-    pub fn new() -> Self {
-        let spout = {
-            let mut spout = SpoutDX12::new();
-
-            if let Some(device) = get_d3d12_device() {
-                spout.open(device);
-            } else {
-                godot_error!("Unable to obtain D3D12 Device");
-            };
-
-            spout
+    pub fn new() -> Result<Box<dyn SpoutReceiver>, Box<dyn std::error::Error>> {
+        let Some(device) = get_d3d12_device() else {
+            godot_error!("Unable to obtain D3D12 Device");
+            return Err("Unable to obtain D3D12 Device".into());
         };
 
+        let mut spout = SpoutDX12::new(device);
         let rs_texture_rid = RenderingServer::singleton().texture_2d_placeholder_create();
 
-        Self {
+        Ok(Box::new(Self {
             spout,
             rs_texture_rid,
             rd_texture_rid: Rid::Invalid,
             texture_resource: None,
-        }
+        }))
     }
 }
 
@@ -83,8 +76,6 @@ impl D3D12SpoutReceiver {
         if !success || !self.spout.is_updated() {
             return None;
         }
-
-        release_resource(&mut self.texture_resource);
 
         let Some(device) = get_d3d12_device() else {
             godot_error!("Unable to obtain D3D12 Device");

@@ -11,26 +11,24 @@ struct TextureHandle {
 };
 
 
-SpoutDX12::SpoutDX12() : _spout(new spoutDX12()),
-                         _cachedD3D12Resource(nullptr),
-                         _cachedD3D11Resource(nullptr) {
+SpoutDX12::SpoutDX12(ID3D12Device *device) : _spout(new spoutDX12()),
+                                             _cachedD3D12Resource(nullptr),
+                                             _cachedD3D11Resource(nullptr) {
+    _spout->OpenDirectX12(device);
 }
 
 SpoutDX12::~SpoutDX12() {
-    delete _spout;
-}
-
-// TODO: Do I need the command queue?
-bool SpoutDX12::open(ID3D12Device *device) const {
-    return _spout->OpenDirectX12(device);
-}
-
-void SpoutDX12::close() const {
     _spout->CloseDirectX12();
+    _spout->OpenSpoutConsole();
+    delete _spout;
 }
 
 void SpoutDX12::release_sender() const {
     _spout->ReleaseSender();
+}
+
+void SpoutDX12::release_receiver() const {
+    _spout->ReleaseReceiver();
 }
 
 bool SpoutDX12::set_sender_name(const std::string &name) const {
@@ -82,11 +80,11 @@ bool SpoutDX12::is_updated() const {
     return _spout->IsUpdated();
 }
 
-bool SpoutDX12::receive_resource(ID3D12Resource** resource) const {
+bool SpoutDX12::receive_resource(ID3D12Resource **resource) const {
     return _spout->ReceiveDX12Resource(resource);
 }
 
-bool SpoutDX12::create_receiver_resource(ID3D12Device* device, ID3D12Resource** resource) const {
+bool SpoutDX12::create_receiver_resource(ID3D12Device *device, ID3D12Resource **resource) const {
     return _spout->CreateDX12texture(
         device,
         _spout->GetSenderWidth(),
@@ -97,14 +95,6 @@ bool SpoutDX12::create_receiver_resource(ID3D12Device* device, ID3D12Resource** 
     );
 }
 
-std::unique_ptr<SpoutDX12> new_spout_dx12() {
-    return std::make_unique<SpoutDX12>();
-}
-
-uint32_t safe_release(ID3D12Resource *const target) {
-    if (target == nullptr) {
-        return 0;
-    }
-
-    return target->Release();
+std::unique_ptr<SpoutDX12> new_spout_dx12(ID3D12Device *device) {
+    return std::make_unique<SpoutDX12>(device);
 }
