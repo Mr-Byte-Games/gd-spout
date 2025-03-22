@@ -1,7 +1,9 @@
 use godot::prelude::*;
+use no_op::NoOpSender;
 
 #[cfg(target_os = "windows")]
 mod dx12;
+mod no_op;
 
 pub trait SpoutSender {
     fn set_sender_name(&mut self, name: &str);
@@ -12,11 +14,11 @@ pub fn create_sender(driver_name: &str) -> Box<dyn SpoutSender> {
     let receiver = match driver_name {
         #[cfg(target_os = "windows")]
         "d3d12" => dx12::D3D12SpoutSender::new(),
-        _ => todo!(),
+        _ => Ok(NoOpSender::new()),
     };
 
     receiver.unwrap_or_else(|err| {
         godot_error!("{err}");
-        todo!()
+        Box::new(NoOpSender)
     })
 }
