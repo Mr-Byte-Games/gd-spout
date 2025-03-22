@@ -12,6 +12,7 @@ thread_local! {
 #[class(init, base=Node)]
 pub struct SpoutSender {
     #[export]
+    #[var(set = set_name)]
     name: GString,
     #[export]
     texture: Option<Gd<Texture2D>>,
@@ -56,6 +57,15 @@ impl INode for SpoutSender {
 }
 #[godot_api]
 impl SpoutSender {
+    #[func]
+    fn set_name(&mut self, name: GString) {
+        if let Some(spout) = &mut self.spout {
+            spout.set_sender_name(&name.to_string());
+        }
+
+        self.name = name;
+    }
+
     #[func]
     fn on_post_draw(&mut self) {
         let Some(spout) = &mut self.spout else {
