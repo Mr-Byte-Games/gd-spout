@@ -7,7 +7,6 @@ use dx12::D3D12SpoutReceiver;
 use godot::builtin::Rid;
 use godot::global::godot_error;
 use no_op::NoOpReceiver;
-use std::error::Error;
 
 pub trait SpoutReceiver {
     fn rid(&self) -> Rid;

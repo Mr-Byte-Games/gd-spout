@@ -1,7 +1,7 @@
 use crate::spout::d3d12_util::{convert_dxgi_to_rd_data_format, get_d3d12_device};
 use crate::spout::receiver::SpoutReceiver;
 use godot::classes::RenderingServer;
-use godot::classes::rendering_device::{DataFormat, TextureSamples, TextureType, TextureUsageBits};
+use godot::classes::rendering_device::{TextureSamples, TextureType, TextureUsageBits};
 use godot::prelude::*;
 use spout_sys::{ID3D12Resource, SpoutDX12};
 use std::ptr::NonNull;
@@ -26,7 +26,7 @@ impl D3D12SpoutReceiver {
             return Err("Unable to obtain D3D12 Device".into());
         };
 
-        let mut spout = SpoutDX12::new(device);
+        let spout = SpoutDX12::new(device);
         let rs_texture_rid = RenderingServer::singleton().texture_2d_placeholder_create();
 
         Ok(Box::new(Self {
@@ -59,8 +59,6 @@ impl SpoutReceiver for D3D12SpoutReceiver {
         let Some(resource) = self.update_spout_resource() else {
             return false;
         };
-
-        godot_print!("{:?}", resource);
 
         self.free_godot_resources();
         self.update_godot_resources(resource);

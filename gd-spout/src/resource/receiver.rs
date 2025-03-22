@@ -13,6 +13,14 @@ pub struct SpoutReceiverTexture {
     base: Base<Texture2D>,
 }
 
+impl Drop for SpoutReceiverTexture {
+    fn drop(&mut self) {
+        if let Some(callback) = self.pre_draw_callback.take() {
+            RenderingServer::singleton().disconnect("frame_pre_draw", &callback);
+        }
+    }
+}
+
 #[godot_api]
 impl ITexture2D for SpoutReceiverTexture {
     fn init(base: Base<Texture2D>) -> SpoutReceiverTexture {

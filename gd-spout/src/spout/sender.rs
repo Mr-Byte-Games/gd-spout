@@ -5,5 +5,18 @@ mod dx12;
 
 pub trait SpoutSender {
     fn set_sender_name(&mut self, name: &str);
-    fn send_texture(&mut self, resource: Rid);
+    fn send_resource(&mut self, resource: Rid);
+}
+
+pub fn create_sender(driver_name: &str) -> Box<dyn SpoutSender> {
+    let receiver = match driver_name {
+        #[cfg(target_os = "windows")]
+        "d3d12" => dx12::D3D12SpoutSender::new(),
+        _ => todo!(),
+    };
+
+    receiver.unwrap_or_else(|err| {
+        godot_error!("{err}");
+        todo!()
+    })
 }

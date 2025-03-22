@@ -2,4 +2,4 @@
 mod d3d12_util;
 
 pub(crate) mod receiver;
-mod sender;
+pub(crate) mod sender;

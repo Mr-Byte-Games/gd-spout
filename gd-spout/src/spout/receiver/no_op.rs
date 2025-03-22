@@ -27,7 +27,7 @@ impl SpoutReceiver for NoOpReceiver {
         self.placeholder
     }
 
-    fn set_sender_name(&mut self, name: &str) {
+    fn set_sender_name(&mut self, _name: &str) {
         // No-op
     }
 

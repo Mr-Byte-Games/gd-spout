@@ -57,8 +57,6 @@ bool SpoutDX12::send_resource(ID3D12Resource *resource) {
         return false;
     }
 
-    _cachedD3D11Resource->Release();
-
     _cachedD3D11Resource = destination;
 
     return true;
