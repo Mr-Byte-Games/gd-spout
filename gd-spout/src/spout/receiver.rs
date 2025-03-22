@@ -24,7 +24,7 @@ pub fn create_receiver(driver_name: &str) -> Box<dyn SpoutReceiver> {
     };
 
     receiver.unwrap_or_else(|err| {
-        godot_error!("{err}");
+        godot_error!("{err}; Failed to create receiver: {driver_name}; Falling back on no op implementation.");
         NoOpReceiver::new()
     })
 }

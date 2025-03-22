@@ -18,7 +18,7 @@ pub fn create_sender(driver_name: &str) -> Box<dyn SpoutSender> {
     };
 
     receiver.unwrap_or_else(|err| {
-        godot_error!("{err}");
+        godot_error!("{err}; Failed to create sender: {driver_name}; Falling back on no op implementation.");
         Box::new(NoOpSender)
     })
 }
