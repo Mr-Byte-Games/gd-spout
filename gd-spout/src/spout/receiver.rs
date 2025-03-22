@@ -2,6 +2,7 @@
 mod dx12;
 mod no_op;
 
+use std::error::Error;
 #[cfg(target_os = "windows")]
 use dx12::D3D12SpoutReceiver;
 use godot::builtin::Rid;
@@ -23,7 +24,7 @@ pub fn create_receiver(driver_name: &str) -> Box<dyn SpoutReceiver> {
         _ => Ok(NoOpReceiver::new()),
     };
 
-    receiver.unwrap_or_else(|err| {
+    receiver.unwrap_or_else(|err: Box<dyn Error>| {
         godot_error!("{err}; Failed to create receiver: {driver_name}; Falling back on no op implementation.");
         NoOpReceiver::new()
     })

@@ -1,3 +1,4 @@
+use std::error::Error;
 use godot::prelude::*;
 use no_op::NoOpSender;
 
@@ -17,7 +18,7 @@ pub fn create_sender(driver_name: &str) -> Box<dyn SpoutSender> {
         _ => Ok(NoOpSender::new()),
     };
 
-    receiver.unwrap_or_else(|err| {
+    receiver.unwrap_or_else(|err: Box<dyn Error>| {
         godot_error!("{err}; Failed to create sender: {driver_name}; Falling back on no op implementation.");
         Box::new(NoOpSender)
     })
