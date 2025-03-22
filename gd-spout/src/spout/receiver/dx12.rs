@@ -1,4 +1,4 @@
-use crate::spout::d3d12_util::get_d3d12_device;
+use crate::spout::d3d12_util::{convert_dxgi_to_rd_data_format, get_d3d12_device};
 use crate::spout::receiver::SpoutReceiver;
 use godot::classes::RenderingServer;
 use godot::classes::rendering_device::{DataFormat, TextureSamples, TextureType, TextureUsageBits};
@@ -23,7 +23,6 @@ impl Drop for D3D12SpoutReceiver {
 impl D3D12SpoutReceiver {
     pub fn new() -> Result<Box<dyn SpoutReceiver>, Box<dyn std::error::Error>> {
         let Some(device) = get_d3d12_device() else {
-            godot_error!("Unable to obtain D3D12 Device");
             return Err("Unable to obtain D3D12 Device".into());
         };
 
@@ -70,7 +69,7 @@ impl SpoutReceiver for D3D12SpoutReceiver {
 }
 
 impl D3D12SpoutReceiver {
-    fn update_spout_resource(&mut self) -> Option<*mut ID3D12Resource> {
+    fn update_spout_resource(&mut self) -> Option<NonNull<ID3D12Resource>> {
         let success = self.spout.receive_resource(&mut self.texture_resource);
 
         if !success || !self.spout.is_updated() {
@@ -78,34 +77,35 @@ impl D3D12SpoutReceiver {
         }
 
         let Some(device) = get_d3d12_device() else {
-            godot_error!("Unable to obtain D3D12 Device");
+            godot_error!("Unable to obtain D3D12 Device!");
             return None;
         };
 
         self.spout.create_receiver_resource(device, &mut self.texture_resource);
 
-        let Some(texture) = &mut self.texture_resource else {
+        let Some(texture) = self.texture_resource else {
             godot_error!("Texture was null!");
             return None;
         };
 
-        Some(texture.as_ptr())
+        Some(texture)
     }
 
-    fn update_godot_resources(&mut self, texture: *mut ID3D12Resource) {
+    fn update_godot_resources(&mut self, texture: NonNull<ID3D12Resource>) {
         let mut rendering_server = RenderingServer::singleton();
         let Some(mut rendering_device) = rendering_server.get_rendering_device() else {
             godot_error!("Rendering device was null!");
             return;
         };
 
-        // TODO: Get texture format from the sender format.
+        let data_format = convert_dxgi_to_rd_data_format(self.spout.get_sender_format());
+
         self.rd_texture_rid = rendering_device.texture_create_from_extension(
             TextureType::TYPE_2D,
-            DataFormat::R8G8B8A8_UNORM,
+            data_format,
             TextureSamples::SAMPLES_1,
             TextureUsageBits::SAMPLING_BIT,
-            texture as u64,
+            texture.as_ptr() as u64,
             self.spout.get_sender_width() as u64,
             self.spout.get_sender_height() as u64,
             0,

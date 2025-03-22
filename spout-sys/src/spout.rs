@@ -157,6 +157,7 @@ mod ffi {
     }
 }
 
+pub use ffi::DXGI_FORMAT;
 pub use ffi::ID3D12Device;
 pub use ffi::ID3D12Resource;
 

@@ -5,8 +5,9 @@ mod no_op;
 #[cfg(target_os = "windows")]
 use dx12::D3D12SpoutReceiver;
 use godot::builtin::Rid;
-use std::error::Error;
+use godot::global::godot_error;
 use no_op::NoOpReceiver;
+use std::error::Error;
 
 pub trait SpoutReceiver {
     fn rid(&self) -> Rid;
@@ -23,6 +24,8 @@ pub fn create_receiver(driver_name: &str) -> Box<dyn SpoutReceiver> {
         _ => Ok(NoOpReceiver::new()),
     };
 
-    receiver.unwrap_or_else(|_| NoOpReceiver::new())
+    receiver.unwrap_or_else(|err| {
+        godot_error!("{err}");
+        NoOpReceiver::new()
+    })
 }
-

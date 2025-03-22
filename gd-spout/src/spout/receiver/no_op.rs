@@ -1,6 +1,6 @@
-﻿use godot::builtin::Rid;
-use godot::classes::RenderingServer;
 use crate::spout::receiver::SpoutReceiver;
+use godot::builtin::Rid;
+use godot::classes::RenderingServer;
 
 pub struct NoOpReceiver {
     placeholder: Rid,
