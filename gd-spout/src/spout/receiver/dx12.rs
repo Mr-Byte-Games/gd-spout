@@ -75,14 +75,14 @@ impl D3D12SpoutReceiver {
         }
 
         let Some(device) = get_d3d12_device() else {
-            godot_error!("Unable to obtain D3D12 Device!");
+            godot_error!("Unable to obtain D3D12 Device.");
             return None;
         };
 
         self.spout.create_receiver_resource(device, &mut self.texture_resource);
 
         let Some(texture) = self.texture_resource else {
-            godot_error!("Texture was null!");
+            godot_error!("Texture was null.");
             return None;
         };
 
@@ -92,7 +92,7 @@ impl D3D12SpoutReceiver {
     fn update_godot_resources(&mut self, texture: NonNull<ID3D12Resource>) {
         let mut rendering_server = RenderingServer::singleton();
         let Some(mut rendering_device) = rendering_server.get_rendering_device() else {
-            godot_error!("Rendering device was null!");
+            godot_error!("Rendering device was null.");
             return;
         };
 
@@ -115,7 +115,7 @@ impl D3D12SpoutReceiver {
     fn free_godot_resources(&mut self) {
         let mut rendering_server = RenderingServer::singleton();
         let Some(mut rendering_device) = rendering_server.get_rendering_device() else {
-            godot_error!("Rendering device was null!");
+            godot_error!("Rendering device was null.");
             return;
         };
 

@@ -22,10 +22,6 @@ pub fn get_d3d12_device() -> Option<NonNull<ID3D12Device>> {
 }
 
 pub fn convert_dxgi_to_rd_data_format(dxgi_input: DXGI_FORMAT) -> DataFormat {
-    // NOTE: This conversion is likely lossy. Multiple RD formats map to the same
-    // DXGI format, which means a single DXGI format can map to multiple RD formats.
-    // Thus this conversion may not catch all possible cases. I may revisit this
-    // in the future to see if I can fix that.
     match dxgi_input {
         DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM => DataFormat::R8G8B8A8_UNORM,
         DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_SNORM => DataFormat::R8G8B8A8_SNORM,

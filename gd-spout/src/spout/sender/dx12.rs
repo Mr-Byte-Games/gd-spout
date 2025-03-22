@@ -2,7 +2,7 @@ use crate::spout::d3d12_util;
 use crate::spout::d3d12_util::get_d3d12_device;
 use crate::spout::sender::SpoutSender;
 use godot::builtin::Rid;
-use godot::global::godot_warn;
+use godot::prelude::godot_error;
 use spout_sys::SpoutDX12;
 
 pub struct D3D12SpoutSender {
@@ -30,13 +30,13 @@ impl D3D12SpoutSender {
 impl SpoutSender for D3D12SpoutSender {
     fn set_sender_name(&mut self, name: &str) {
         if !self.spout.set_sender_name(name) {
-            godot_warn!("Unable to set sender name");
+            godot_error!("Unable to set sender name.");
         }
     }
 
     fn send_resource(&mut self, resource: Rid) {
         let Some(resource) = d3d12_util::get_d3d12_resource_from_texture(resource) else {
-            godot_warn!("Unable to obtain texture resource.");
+            godot_error!("Given RID returned invalid D3D12 resource.");
             return;
         };
 
