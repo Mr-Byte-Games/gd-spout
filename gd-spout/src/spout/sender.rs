@@ -1,6 +1,5 @@
-use std::error::Error;
 use godot::prelude::*;
-use no_op::NoOpSender;
+use std::error::Error;
 
 #[cfg(target_os = "windows")]
 mod dx12;
@@ -15,11 +14,11 @@ pub fn create_sender(driver_name: &str) -> Box<dyn SpoutSender> {
     let receiver = match driver_name {
         #[cfg(target_os = "windows")]
         "d3d12" => dx12::D3D12SpoutSender::new(),
-        _ => Ok(NoOpSender::new()),
+        _ => Ok(no_op::NoOpSender::new()),
     };
 
     receiver.unwrap_or_else(|err: Box<dyn Error>| {
         godot_error!("{err}; Failed to create sender: {driver_name}; Falling back on no op implementation.");
-        Box::new(NoOpSender)
+        no_op::NoOpSender::new()
     })
 }

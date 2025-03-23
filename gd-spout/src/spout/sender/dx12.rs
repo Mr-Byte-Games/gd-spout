@@ -1,8 +1,7 @@
 use crate::spout::d3d12_util;
 use crate::spout::d3d12_util::get_d3d12_device;
 use crate::spout::sender::SpoutSender;
-use godot::builtin::Rid;
-use godot::prelude::godot_error;
+use godot::prelude::*;
 use spout_sys::SpoutDX12;
 
 pub struct D3D12SpoutSender {

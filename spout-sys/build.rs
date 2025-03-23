@@ -1,9 +1,11 @@
-use std::path::PathBuf;
-
-const SPOUT_DIR: &str = "deps/Spout2";
-
 #[cfg(not(target_os = "windows"))]
 fn main() {}
+
+#[cfg(target_os = "windows")]
+use std::path::PathBuf;
+
+#[cfg(target_os = "windows")]
+const SPOUT_DIR: &str = "deps/Spout2";
 
 #[cfg(target_os = "windows")]
 fn main() {
