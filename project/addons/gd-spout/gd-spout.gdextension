@@ -1,0 +1,14 @@
+﻿[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.2
+reloadable = true
+
+[libraries]
+linux.debug.x86_64 =     "res://addons/gd-spout/lib/linux/debug/libgd_spout.so"
+linux.release.x86_64 =   "res://addons/gd-spout/lib/linux/release/libgd_spout.so"
+windows.debug.x86_64 =   "res://addons/gd-spout/lib/windows/debug/gd_spout.dll"
+windows.release.x86_64 = "res://addons/gd-spout/lib/windows/release/gd_spout.dll"
+macos.debug =            "res://addons/gd-spout/lib/macos/debug/libgd_spout.dylib"
+macos.release =          "res://addons/gd-spout/lib/macos/release/libgd_spout.dylib"
+macos.debug.arm64 =      "res://addons/gd-spout/lib/macos/debug/libgd_spout.dylib"
+macos.release.arm64 =    "res://addons/gd-spout/lib/macos/release/libgd_spout.dylib"
