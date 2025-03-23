@@ -1,6 +1,7 @@
 #[cfg(not(target_os = "windows"))]
 fn main() {}
 
+#[cfg(target_os = "windows")]
 use std::path::Path;
 #[cfg(target_os = "windows")]
 use std::path::PathBuf;
@@ -34,6 +35,7 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
 }
 
+#[cfg(target_os = "windows")]
 fn copy_spout_output(build_dir: &Path) {
     let bin_dir = build_dir.join("bin");
     let target_dir = get_target_dir();
@@ -51,6 +53,7 @@ fn copy_spout_output(build_dir: &Path) {
     std::fs::copy(spout_dx12_dll_src, spout_dx12_dll_dst).unwrap();
 }
 
+#[cfg(target_os = "windows")]
 fn get_target_dir() -> PathBuf {
     let manifest_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
     let profile = std::env::var("PROFILE").unwrap();
