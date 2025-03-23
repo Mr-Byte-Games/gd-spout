@@ -11,6 +11,8 @@ const SPOUT_DIR: &str = "deps/Spout2";
 
 #[cfg(target_os = "windows")]
 fn main() {
+    init_spout_submodule();
+
     let build_dir = build_spout();
     let lib_dir = build_dir.join("lib");
     let include_dir = build_dir.join("include");
@@ -33,6 +35,18 @@ fn main() {
     println!("cargo:rustc-link-lib=SpoutDX");
     println!("cargo:rustc-link-lib=SpoutDX12");
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
+}
+
+#[cfg(target_os = "windows")]
+fn init_spout_submodule() {
+    let status = std::process::Command::new("git")
+        .args(["submodule", "update", "--init"])
+        .status()
+        .unwrap();
+
+    if !status.success() {
+        panic!("failed to init spout submodule");
+    }
 }
 
 #[cfg(target_os = "windows")]
