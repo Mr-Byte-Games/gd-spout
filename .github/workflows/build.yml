@@ -71,19 +71,6 @@ jobs:
       - name: Build (Debug)
         if: ${{ startsWith(matrix.target, 'debug') }}
         run: cargo build --verbose
-
-      # DEBUG
-      - name: List Visual Studio Installation Paths
-        if: matrix.platform == 'windows'
-        run: |
-          dir "C:\Program Files\Microsoft Visual Studio" /s /b
-          dir "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\" /s /b
-          Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\" -Directory -Name
-      - name: Print PATH Environment Variable
-        if: matrix.platform == 'windows'
-        run: echo $env:PATH
-      # END DEBUG
-
       - name: Build (Release)
         if: ${{ startsWith(matrix.target, 'release') }}
         run: cargo build --release --verbose
