@@ -12,3 +12,16 @@ macos.debug =            "res://addons/gd-spout/lib/macos/debug/libgd_spout.dyli
 macos.release =          "res://addons/gd-spout/lib/macos/release/libgd_spout.dylib"
 macos.debug.arm64 =      "res://addons/gd-spout/lib/macos/debug/libgd_spout.dylib"
 macos.release.arm64 =    "res://addons/gd-spout/lib/macos/release/libgd_spout.dylib"
+
+[dependencies]
+windows.debug = {
+    "res://addons/gd-spout/lib/windows/debug/Spout.dll": "",
+    "res://addons/gd-spout/lib/windows/debug/SpoutDX.dll": "",
+    "res://addons/gd-spout/lib/windows/debug/SpoutDX12.dll": ""
+}
+
+windows.release = {
+    "res://addons/gd-spout/lib/windows/release/Spout.dll": "",
+    "res://addons/gd-spout/lib/windows/release/SpoutDX.dll": "",
+    "res://addons/gd-spout/lib/windows/release/SpoutDX12.dll": ""
+}
