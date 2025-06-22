@@ -19,7 +19,6 @@ SpoutDX12::SpoutDX12(ID3D12Device *device) : _spout(new spoutDX12()),
 
 SpoutDX12::~SpoutDX12() {
     _spout->CloseDirectX12();
-    _spout->OpenSpoutConsole();
     delete _spout;
 }
 
