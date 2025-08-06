@@ -102,20 +102,13 @@ jobs:
           mv ./lib ./project/addons/gd-spout
           cp LICENSE ./project/addons/gd-spout
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}
-          path: |
-            ${{ github.workspace }}/project/
-
       - name: Zip Files
         working-directory: ${{ github.workspace }}
         run: zip -r ./gd-spout.zip ./project/
 
       - name: Set Version
         run: |
-          PACKAGE_VERSION=$(grep -oP '(?<=version\s=\s")[^"]+' gd-spout/Cargo.toml | tr -d '\n')
+          PACKAGE_VERSION=$(grep -oP -m 1 '(?<=version\s=\s")[^"]+' gd-spout/Cargo.toml | tr -d '\n')
           echo "packageVersion=$PACKAGE_VERSION" >> $GITHUB_ENV
 
       - name: Create Version Release
