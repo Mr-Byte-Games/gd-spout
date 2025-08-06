@@ -115,7 +115,7 @@ jobs:
 
       - name: Set Version
         run: |
-          PACKAGE_VERSION=$(grep -oP '(?<="version": ")[^"]+' dist/module.json | tr -d '\n')
+          PACKAGE_VERSION=$(grep -oP '(?<=version\s=\s")[^"]+' gd-spout/Cargo.toml | tr -d '\n')
           echo "packageVersion=$PACKAGE_VERSION" >> $GITHUB_ENV
 
       - name: Create Version Release
