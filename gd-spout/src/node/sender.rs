@@ -1,4 +1,4 @@
-use godot::classes::{Engine, Node, RenderingServer, Texture2D};
+use godot::classes::{Engine, ImageTexture, Node, RenderingServer, Texture2D};
 use godot::prelude::*;
 
 use crate::spout;
@@ -79,6 +79,17 @@ impl SpoutSender {
 
         let Some(texture) = &self.texture else {
             godot_error!("No texture available.");
+            return;
+        };
+
+        // TODO: Will this copy work? Is it needed?
+        let Some(image) = texture.get_image() else {
+            godot_error!("Failed to get image from texture.");
+            return;
+        };
+
+        let Some(texture) = ImageTexture::create_from_image(&image) else {
+            godot_error!("Failed to create texture from image.");
             return;
         };
 
