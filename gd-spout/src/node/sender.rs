@@ -1,4 +1,4 @@
-use godot::classes::{Node, RenderingServer, Texture2D};
+use godot::classes::{Engine, Node, RenderingServer, Texture2D};
 use godot::prelude::*;
 
 use crate::spout;
@@ -38,6 +38,10 @@ impl INode for SpoutSender {
     }
 
     fn ready(&mut self) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         if let Some(callback) = self.callback.take() {
             RenderingServer::singleton().disconnect("frame_post_draw", &callback);
         }
