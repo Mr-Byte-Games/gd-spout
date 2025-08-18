@@ -7,5 +7,5 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-godot = { git = "https://github.com/godot-rust/gdext.git", version = "0.2.4" }
+godot = { git = "https://github.com/godot-rust/gdext.git", version = "0.3.4" }
 spout-sys = { path = "../spout-sys" }
