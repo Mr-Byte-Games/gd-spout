@@ -1,4 +1,4 @@
-use godot::classes::{Engine, Node, RenderingServer, Texture2D};
+use godot::classes::{Engine, ImageTexture, Node, RenderingServer, Texture2D};
 use godot::prelude::*;
 
 use crate::spout;
@@ -17,6 +17,7 @@ pub struct SpoutSender {
     #[export]
     texture: Option<Gd<Texture2D>>,
     callback: Option<Callable>,
+    image_texture: Option<Gd<ImageTexture>>,
     spout: Option<Box<dyn spout::sender::SpoutSender>>,
     base: Base<Node>,
 }
@@ -82,6 +83,22 @@ impl SpoutSender {
             return;
         };
 
-        spout.send_resource(texture.get_rid());
+        let Some(image) = texture.get_image() else {
+            godot_error!("Unable to get image data from texture.");
+            return;
+        };
+
+        let rid = if let Some(image_texture) = &mut self.image_texture {
+            image_texture.update(&image);
+            image_texture.get_rid()
+        } else {
+            if let Some(image_texture) = ImageTexture::create_from_image(&image) {
+                self.image_texture.insert(image_texture).get_rid()
+            } else {
+                Rid::Invalid
+            }
+        };
+
+        spout.send_resource(rid);
     }
 }
