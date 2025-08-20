@@ -21,15 +21,14 @@ SpoutDX12::SpoutDX12(ID3D12Device *device) : _spout(new spoutDX12()),
 }
 
 SpoutDX12::SpoutDX12(ID3D12Device *device, ID3D12CommandQueue *commandQueue) : _spout(new spoutDX12()),
-                                             _cachedD3D12Resource(nullptr),
-                                             _cachedD3D11Resource(nullptr),
-                                             _device(device),
-                                             _commandQueue(commandQueue),
-                                             _fenceEvent(nullptr),
-                                             _fenceValue(1) {
+                                                                               _cachedD3D12Resource(nullptr),
+                                                                               _cachedD3D11Resource(nullptr),
+                                                                               _device(device),
+                                                                               _commandQueue(commandQueue),
+                                                                               _fenceEvent(nullptr),
+                                                                               _fenceValue(1) {
     _spout->OpenDirectX12(device);
-    
-    // Create fence for synchronization with Godot's command queue
+
     if (_commandQueue) {
         device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_fence));
         _fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -40,7 +39,7 @@ SpoutDX12::~SpoutDX12() {
     if (_fenceEvent) {
         CloseHandle(_fenceEvent);
     }
-    
+
     _spout->CloseDirectX12();
     delete _spout;
 }
@@ -67,10 +66,17 @@ bool SpoutDX12::send_resource(ID3D12Resource *resource) {
     }
 
     if (_commandQueue && _fence) {
-        _commandQueue->Signal(_fence.Get(), _fenceValue);
+        HRESULT hr = _commandQueue->Signal(_fence.Get(), _fenceValue);
+        if (FAILED(hr)) {
+            return false;
+        }
 
         if (_fence->GetCompletedValue() < _fenceValue) {
-            _fence->SetEventOnCompletion(_fenceValue, _fenceEvent);
+            HRESULT hr = _fence->SetEventOnCompletion(_fenceValue, _fenceEvent);
+            if (FAILED(hr)) {
+                return false;
+            }
+
             WaitForSingleObject(_fenceEvent, INFINITE);
         }
 
@@ -92,7 +98,7 @@ bool SpoutDX12::send_resource(ID3D12Resource *resource) {
 
     _cachedD3D11Resource = destination;
 
-    return true;
+    return _spout->SendDX11Resource(_cachedD3D11Resource.Get());
 }
 
 unsigned int SpoutDX12::get_sender_height() const {
