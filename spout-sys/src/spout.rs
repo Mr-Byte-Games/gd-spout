@@ -135,6 +135,7 @@ mod ffi {
         type SpoutDX12;
         type ID3D12Device;
         type ID3D12Resource;
+        type ID3D12CommandQueue;
         type DXGI_FORMAT;
 
         unsafe fn send_resource(self: Pin<&mut SpoutDX12>, resource: *mut ID3D12Resource) -> bool;
@@ -154,12 +155,14 @@ mod ffi {
         fn is_updated(self: &SpoutDX12) -> bool;
 
         unsafe fn new_spout_dx12(device: *mut ID3D12Device) -> UniquePtr<SpoutDX12>;
+        unsafe fn new_spout_dx12_with_queue(device: *mut ID3D12Device, command_queue: *mut ID3D12CommandQueue) -> UniquePtr<SpoutDX12>;
     }
 }
 
 pub use ffi::DXGI_FORMAT;
 pub use ffi::ID3D12Device;
 pub use ffi::ID3D12Resource;
+pub use ffi::ID3D12CommandQueue;
 
 pub struct SpoutDX12 {
     inner: UniquePtr<ffi::SpoutDX12>,
@@ -169,6 +172,12 @@ impl SpoutDX12 {
     pub fn new(device: NonNull<ID3D12Device>) -> Self {
         Self {
             inner: unsafe { ffi::new_spout_dx12(device.as_ptr()) },
+        }
+    }
+
+    pub fn new_with_queue(device: NonNull<ID3D12Device>, command_queue: NonNull<ID3D12CommandQueue>) -> Self {
+        Self {
+            inner: unsafe { ffi::new_spout_dx12_with_queue(device.as_ptr(), command_queue.as_ptr()) },
         }
     }
 

@@ -1,5 +1,5 @@
 use crate::spout::d3d12_util;
-use crate::spout::d3d12_util::get_d3d12_device;
+use crate::spout::d3d12_util::{get_d3d12_device, get_d3d12_command_queue};
 use crate::spout::sender::SpoutSender;
 use godot::prelude::*;
 use spout_sys::SpoutDX12;
@@ -20,7 +20,11 @@ impl D3D12SpoutSender {
             return Err("Unable to obtain D3D12 Device".into());
         };
 
-        let spout = SpoutDX12::new(device);
+        let Some(command_queue) = get_d3d12_command_queue() else {
+            return Err("Unable to obtain D3D12 Command Queue".into());
+        };
+
+        let spout = SpoutDX12::new_with_queue(device, command_queue);
 
         Ok(Box::new(Self { spout }))
     }

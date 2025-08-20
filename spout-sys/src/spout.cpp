@@ -10,14 +10,37 @@ struct TextureHandle {
     ID3D12Resource *resource;
 };
 
-
 SpoutDX12::SpoutDX12(ID3D12Device *device) : _spout(new spoutDX12()),
                                              _cachedD3D12Resource(nullptr),
-                                             _cachedD3D11Resource(nullptr) {
+                                             _cachedD3D11Resource(nullptr),
+                                             _device(device),
+                                             _commandQueue(nullptr),
+                                             _fenceEvent(nullptr),
+                                             _fenceValue(1) {
     _spout->OpenDirectX12(device);
 }
 
+SpoutDX12::SpoutDX12(ID3D12Device *device, ID3D12CommandQueue *commandQueue) : _spout(new spoutDX12()),
+                                             _cachedD3D12Resource(nullptr),
+                                             _cachedD3D11Resource(nullptr),
+                                             _device(device),
+                                             _commandQueue(commandQueue),
+                                             _fenceEvent(nullptr),
+                                             _fenceValue(1) {
+    _spout->OpenDirectX12(device);
+    
+    // Create fence for synchronization with Godot's command queue
+    if (_commandQueue) {
+        device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&_fence));
+        _fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    }
+}
+
 SpoutDX12::~SpoutDX12() {
+    if (_fenceEvent) {
+        CloseHandle(_fenceEvent);
+    }
+    
     _spout->CloseDirectX12();
     delete _spout;
 }
@@ -41,6 +64,17 @@ void SpoutDX12::set_receiver_name(const std::string &name) const {
 bool SpoutDX12::send_resource(ID3D12Resource *resource) {
     if (resource == nullptr) {
         return false;
+    }
+
+    if (_commandQueue && _fence) {
+        _commandQueue->Signal(_fence.Get(), _fenceValue);
+
+        if (_fence->GetCompletedValue() < _fenceValue) {
+            _fence->SetEventOnCompletion(_fenceValue, _fenceEvent);
+            WaitForSingleObject(_fenceEvent, INFINITE);
+        }
+
+        _fenceValue++;
     }
 
     if (_cachedD3D12Resource.Get() == resource) {
@@ -94,4 +128,8 @@ bool SpoutDX12::create_receiver_resource(ID3D12Device *device, ID3D12Resource **
 
 std::unique_ptr<SpoutDX12> new_spout_dx12(ID3D12Device *device) {
     return std::make_unique<SpoutDX12>(device);
+}
+
+std::unique_ptr<SpoutDX12> new_spout_dx12_with_queue(ID3D12Device *device, ID3D12CommandQueue *commandQueue) {
+    return std::make_unique<SpoutDX12>(device, commandQueue);
 }

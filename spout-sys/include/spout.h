@@ -11,6 +11,7 @@ struct spoutDX12;
 class SpoutDX12 {
 public:
     explicit SpoutDX12(ID3D12Device *device);
+    SpoutDX12(ID3D12Device *device, ID3D12CommandQueue *commandQueue);
 
     ~SpoutDX12();
 
@@ -44,6 +45,12 @@ private:
     spoutDX12 *_spout;
     Microsoft::WRL::ComPtr<ID3D12Resource> _cachedD3D12Resource;
     Microsoft::WRL::ComPtr<ID3D11Resource> _cachedD3D11Resource;
+    Microsoft::WRL::ComPtr<ID3D12Device> _device;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> _commandQueue;
+    Microsoft::WRL::ComPtr<ID3D12Fence> _fence;
+    HANDLE _fenceEvent;
+    uint64_t _fenceValue;
 };
 
 std::unique_ptr<SpoutDX12> new_spout_dx12(ID3D12Device *device);
+std::unique_ptr<SpoutDX12> new_spout_dx12_with_queue(ID3D12Device *device, ID3D12CommandQueue *commandQueue);

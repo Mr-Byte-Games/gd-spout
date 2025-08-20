@@ -2,11 +2,12 @@ use godot::builtin::Rid;
 use godot::classes::RenderingServer;
 use godot::classes::rendering_device::{DataFormat, DriverResource};
 use godot::prelude::*;
-use spout_sys::{DXGI_FORMAT, ID3D12Device, ID3D12Resource};
+use spout_sys::{DXGI_FORMAT, ID3D12Device, ID3D12Resource, ID3D12CommandQueue};
 use std::ptr::NonNull;
 
 pub fn get_d3d12_resource_from_texture(rid: Rid) -> Option<NonNull<ID3D12Resource>> {
-    let resource_id = RenderingServer::singleton().texture_get_native_handle(rid);
+    let mut device = RenderingServer::singleton().get_rendering_device()?;
+    let resource_id = device.get_driver_resource(DriverResource::TEXTURE, rid, 0);
     let resource = resource_id as *mut *mut ID3D12Resource;
 
     NonNull::new(resource)
@@ -19,6 +20,13 @@ pub fn get_d3d12_device() -> Option<NonNull<ID3D12Device>> {
     let logical_device_id = device.get_driver_resource(DriverResource::LOGICAL_DEVICE, Rid::Invalid, 0);
 
     NonNull::new(logical_device_id as *mut ID3D12Device)
+}
+
+pub fn get_d3d12_command_queue() -> Option<NonNull<ID3D12CommandQueue>> {
+    let mut device = RenderingServer::singleton().get_rendering_device()?;
+    let command_queue_id = device.get_driver_resource(DriverResource::COMMAND_QUEUE, Rid::Invalid, 0);
+
+    NonNull::new(command_queue_id as *mut ID3D12CommandQueue)
 }
 
 pub fn convert_dxgi_to_rd_data_format(dxgi_input: DXGI_FORMAT) -> DataFormat {
