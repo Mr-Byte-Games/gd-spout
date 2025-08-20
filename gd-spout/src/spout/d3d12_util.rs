@@ -25,8 +25,11 @@ pub fn get_d3d12_device() -> Option<NonNull<ID3D12Device>> {
 pub fn get_d3d12_command_queue() -> Option<NonNull<ID3D12CommandQueue>> {
     let mut device = RenderingServer::singleton().get_rendering_device()?;
     let command_queue_id = device.get_driver_resource(DriverResource::COMMAND_QUEUE, Rid::Invalid, 0);
+    let resource = command_queue_id as *mut *mut ID3D12CommandQueue;
 
-    NonNull::new(command_queue_id as *mut ID3D12CommandQueue)
+    NonNull::new(resource)
+        .map(|outer| unsafe { *outer.as_ptr() })
+        .and_then(NonNull::new)
 }
 
 pub fn convert_dxgi_to_rd_data_format(dxgi_input: DXGI_FORMAT) -> DataFormat {
