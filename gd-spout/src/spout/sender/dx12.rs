@@ -1,8 +1,10 @@
 use crate::spout::d3d12_util;
-use crate::spout::d3d12_util::{get_d3d12_device, get_d3d12_command_queue};
+use crate::spout::d3d12_util::{get_d3d12_command_queue, get_d3d12_device};
 use crate::spout::sender::SpoutSender;
 use godot::prelude::*;
 use spout_sys::SpoutDX12;
+
+mod spout_sender_manager;
 
 pub struct D3D12SpoutSender {
     spout: SpoutDX12,
