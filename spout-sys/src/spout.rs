@@ -1,8 +1,5 @@
 #![cfg(target_os = "windows")]
 
-use cxx::{UniquePtr, let_cxx_string};
-use std::ptr::NonNull;
-
 #[cxx::bridge]
 mod ffi {
     #[derive(Debug, Copy, Clone)]
@@ -135,18 +132,25 @@ mod ffi {
         type SpoutDX12;
         type ID3D12Device;
         type ID3D12Resource;
+        type ID3D11Resource;
         type ID3D12CommandQueue;
         type DXGI_FORMAT;
 
-        unsafe fn send_resource(self: Pin<&mut SpoutDX12>, resource: *mut ID3D12Resource) -> bool;
-        unsafe fn receive_resource(self: &SpoutDX12, resource: *mut *mut ID3D12Resource) -> bool;
-        unsafe fn create_receiver_resource(
+        // Raw C++ bindings - no wrapper logic
+        unsafe fn send_dx11_resource(self: &SpoutDX12, resource: *mut ID3D11Resource) -> bool;
+        unsafe fn wrap_dx12_resource(
+            self: &SpoutDX12,
+            dx12_resource: *mut ID3D12Resource,
+            dx11_resource: *mut *mut ID3D11Resource,
+        ) -> bool;
+        unsafe fn receive_dx12_resource(self: &SpoutDX12, resource: *mut *mut ID3D12Resource) -> bool;
+        unsafe fn create_dx12_texture(
             self: &SpoutDX12,
             device: *mut ID3D12Device,
             resource: *mut *mut ID3D12Resource,
         ) -> bool;
-        fn set_sender_name(self: &SpoutDX12, name: &CxxString) -> bool;
-        fn set_receiver_name(self: &SpoutDX12, name: &CxxString);
+        fn set_sender_name(self: &SpoutDX12, name: &str) -> bool;
+        fn set_receiver_name(self: &SpoutDX12, name: &str);
         fn release_sender(self: &SpoutDX12);
         fn release_receiver(self: &SpoutDX12);
         fn get_sender_width(self: &SpoutDX12) -> u32;
@@ -155,91 +159,15 @@ mod ffi {
         fn is_updated(self: &SpoutDX12) -> bool;
 
         unsafe fn new_spout_dx12(device: *mut ID3D12Device) -> UniquePtr<SpoutDX12>;
-        unsafe fn new_spout_dx12_with_queue(device: *mut ID3D12Device, command_queue: *mut ID3D12CommandQueue) -> UniquePtr<SpoutDX12>;
     }
 }
 
+use cxx::UniquePtr;
+
+pub type Spout = UniquePtr<ffi::SpoutDX12>;
 pub use ffi::DXGI_FORMAT;
+pub use ffi::ID3D11Resource;
+pub use ffi::ID3D12CommandQueue;
 pub use ffi::ID3D12Device;
 pub use ffi::ID3D12Resource;
-pub use ffi::ID3D12CommandQueue;
-
-pub struct SpoutDX12 {
-    inner: UniquePtr<ffi::SpoutDX12>,
-}
-
-impl SpoutDX12 {
-    pub fn new(device: NonNull<ID3D12Device>) -> Self {
-        Self {
-            inner: unsafe { ffi::new_spout_dx12(device.as_ptr()) },
-        }
-    }
-
-    pub fn new_with_queue(device: NonNull<ID3D12Device>, command_queue: NonNull<ID3D12CommandQueue>) -> Self {
-        Self {
-            inner: unsafe { ffi::new_spout_dx12_with_queue(device.as_ptr(), command_queue.as_ptr()) },
-        }
-    }
-
-    pub fn set_sender_name(&mut self, name: impl AsRef<[u8]>) -> bool {
-        let_cxx_string!(cxx_name = name);
-
-        self.inner.set_sender_name(&cxx_name)
-    }
-
-    pub fn set_receiver_name(&mut self, name: impl AsRef<[u8]>) {
-        let_cxx_string!(cxx_name = name);
-
-        self.inner.set_receiver_name(&cxx_name)
-    }
-
-    pub fn send_resource(&mut self, texture: NonNull<ID3D12Resource>) -> bool {
-        let Some(inner) = self.inner.as_mut() else {
-            return false;
-        };
-
-        unsafe { inner.send_resource(texture.as_ptr()) }
-    }
-
-    pub fn receive_resource(&self, resource: &mut Option<NonNull<ID3D12Resource>>) -> bool {
-        unsafe {
-            let resource: *mut *mut ID3D12Resource = std::mem::transmute(resource);
-            self.inner.receive_resource(resource)
-        }
-    }
-
-    pub fn create_receiver_resource(
-        &self,
-        device: NonNull<ID3D12Device>,
-        resource: &mut Option<NonNull<ID3D12Resource>>,
-    ) -> bool {
-        unsafe {
-            let resource: *mut *mut ID3D12Resource = std::mem::transmute(resource);
-            self.inner.create_receiver_resource(device.as_ptr(), resource)
-        }
-    }
-
-    pub fn release_sender(&mut self) {
-        self.inner.release_sender();
-    }
-
-    pub fn release_receiver(&mut self) {
-        self.inner.release_receiver();
-    }
-
-    pub fn get_sender_width(&self) -> u32 {
-        self.inner.get_sender_width()
-    }
-
-    pub fn get_sender_height(&self) -> u32 {
-        self.inner.get_sender_height()
-    }
-
-    pub fn get_sender_format(&self) -> ffi::DXGI_FORMAT {
-        self.inner.get_sender_format()
-    }
-
-    pub fn is_updated(&self) -> bool {
-        self.inner.is_updated()
-    }
-}
+pub use ffi::new_spout_dx12 as new;

@@ -1,4 +1,4 @@
-use crate::spout::receiver::{SpoutReceiver, create_receiver};
+use crate::spout::{SpoutReceiver, create_receiver};
 use godot::classes::{ITexture2D, RenderingServer, Texture2D};
 use godot::prelude::*;
 

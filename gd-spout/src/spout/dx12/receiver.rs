@@ -1,16 +1,19 @@
-use crate::spout::d3d12_util::{convert_dxgi_to_rd_data_format, get_d3d12_device};
+use crate::spout::dx12::godot::{convert_dxgi_to_rd_data_format, get_d3d12_device};
 use crate::spout::receiver::SpoutReceiver;
 use godot::classes::RenderingServer;
 use godot::classes::rendering_device::{TextureSamples, TextureType, TextureUsageBits};
 use godot::prelude::*;
-use spout_sys::{ID3D12Resource, SpoutDX12};
+use spout_sys::{ID3D12Resource, Spout};
 use std::ptr::NonNull;
+use windows::Win32::Graphics::Direct3D12::ID3D12Device;
+use windows::core::Interface;
 
 pub struct D3D12SpoutReceiver {
-    spout: SpoutDX12,
+    spout: Spout,
     rd_texture_rid: Rid,
     rs_texture_rid: Rid,
     texture_resource: Option<NonNull<ID3D12Resource>>,
+    device: ID3D12Device,
 }
 
 impl Drop for D3D12SpoutReceiver {
@@ -26,7 +29,7 @@ impl D3D12SpoutReceiver {
             return Err("Unable to obtain D3D12 Device".into());
         };
 
-        let spout = SpoutDX12::new(device);
+        let spout = unsafe { spout_sys::new(device.as_raw() as *mut spout_sys::ID3D12Device) };
         let rs_texture_rid = RenderingServer::singleton().texture_2d_placeholder_create();
 
         Ok(Box::new(Self {
@@ -34,6 +37,7 @@ impl D3D12SpoutReceiver {
             rs_texture_rid,
             rd_texture_rid: Rid::Invalid,
             texture_resource: None,
+            device,
         }))
     }
 }
@@ -68,18 +72,17 @@ impl SpoutReceiver for D3D12SpoutReceiver {
 
 impl D3D12SpoutReceiver {
     fn update_spout_resource(&mut self) -> Option<NonNull<ID3D12Resource>> {
-        let success = self.spout.receive_resource(&mut self.texture_resource);
+        let resource: *mut *mut ID3D12Resource = unsafe { std::mem::transmute(&mut self.texture_resource) };
+        let success = unsafe { self.spout.receive_dx12_resource(resource) };
 
         if !success || !self.spout.is_updated() {
             return None;
         }
 
-        let Some(device) = get_d3d12_device() else {
-            godot_error!("Unable to obtain D3D12 Device.");
-            return None;
+        unsafe {
+            self.spout
+                .create_dx12_texture(self.device.as_raw() as *mut spout_sys::ID3D12Device, resource)
         };
-
-        self.spout.create_receiver_resource(device, &mut self.texture_resource);
 
         let Some(texture) = self.texture_resource else {
             godot_error!("Texture was null.");
@@ -98,6 +101,7 @@ impl D3D12SpoutReceiver {
 
         let data_format = convert_dxgi_to_rd_data_format(self.spout.get_sender_format());
 
+        // TODO: Do I just copy from this image to one owned by Godot via a GPU only copy?
         self.rd_texture_rid = rendering_device.texture_create_from_extension(
             TextureType::TYPE_2D,
             data_format,

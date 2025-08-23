@@ -1,0 +1,104 @@
+use crate::spout::dx12::fence::Fence;
+use crate::spout::sender::SpoutSender;
+use godot::prelude::*;
+use spout_sys::{ID3D11Resource, Spout};
+use std::ptr::NonNull;
+use windows::Win32::Graphics::Direct3D12::ID3D12Resource;
+use windows::core::Interface;
+
+pub struct D3D12SpoutSender {
+    spout: Spout,
+    fence: Fence,
+    // TODO: Should these be Rust native COM types that are owned?
+    cached_dx12_resource: Option<NonNull<spout_sys::ID3D12Resource>>,
+    cached_dx11_resource: Option<NonNull<ID3D11Resource>>,
+}
+
+impl D3D12SpoutSender {
+    pub fn new() -> Result<Box<dyn SpoutSender>, Box<dyn std::error::Error>> {
+        let Some(device) = super::godot::get_d3d12_device() else {
+            return Err("Unable to obtain D3D12 Device".into());
+        };
+
+        let Some(command_queue) = super::godot::get_d3d12_command_queue() else {
+            return Err("Unable to obtain D3D12 Command Queue".into());
+        };
+
+        let spout = unsafe { spout_sys::new(device.as_raw() as *mut spout_sys::ID3D12Device) };
+        let fence =
+            Fence::new(&device, command_queue).map_err(|e| format!("Failed to create sender fence manager: {}", e))?;
+
+        Ok(Box::new(Self {
+            spout,
+            fence,
+            cached_dx12_resource: None,
+            cached_dx11_resource: None,
+        }))
+    }
+}
+
+impl Drop for D3D12SpoutSender {
+    fn drop(&mut self) {
+        self.release();
+    }
+}
+
+impl SpoutSender for D3D12SpoutSender {
+    fn set_sender_name(&mut self, name: &str) {
+        if !self.spout.set_sender_name(name) {
+            godot_error!("Unable to set sender name.");
+        }
+    }
+
+    fn send_resource(&mut self, resource: Rid) {
+        let Some(resource) = super::godot::get_d3d12_resource_from_texture(resource) else {
+            godot_error!("Given RID returned invalid D3D12 resource.");
+            return;
+        };
+
+        if !self.send(resource) {
+            godot_error!("Failed to send resource to Spout.");
+        }
+    }
+}
+
+impl D3D12SpoutSender {
+    fn send(&mut self, dx12_resource: ID3D12Resource) -> bool {
+        if self.fence.wait_for_gpu().is_err() {
+            godot_error!("Failed to wait for GPU completion before sending");
+            return false;
+        }
+
+        let dx12_resource = unsafe { NonNull::new_unchecked(dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource) };
+
+        if let Some(cached_dx12) = self.cached_dx12_resource
+            && cached_dx12.as_ptr() == dx12_resource.as_ptr()
+            && let Some(ref mut cached_resource) = self.cached_dx11_resource
+        {
+            return unsafe { self.spout.send_dx11_resource(cached_resource.as_mut()) };
+        }
+
+        let mut dx11_resource: *mut ID3D11Resource = std::ptr::null_mut();
+
+        let success = unsafe {
+            self.spout
+                .wrap_dx12_resource(dx12_resource.as_ptr(), &mut dx11_resource)
+        };
+
+        if !success || dx11_resource.is_null() {
+            godot_error!("Failed to wrap D3D12 resource for sending");
+            return false;
+        }
+
+        let dx11_resource = unsafe { NonNull::new_unchecked(dx11_resource) };
+        self.cached_dx11_resource = Some(dx11_resource);
+        self.cached_dx12_resource = Some(dx12_resource);
+
+        unsafe { self.spout.send_dx11_resource(dx11_resource.as_ptr()) }
+    }
+
+    fn release(&mut self) {
+        self.spout.release_sender();
+        self.cached_dx11_resource = None;
+    }
+}
