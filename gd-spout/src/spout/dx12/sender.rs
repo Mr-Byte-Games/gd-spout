@@ -46,7 +46,6 @@ pub struct Sender {
     spout: Spout,
     fence: Fence,
     cached_resource: Option<NonNull<ID3D11Resource>>,
-    sender_name: String,
 }
 
 impl Sender {
@@ -59,16 +58,11 @@ impl Sender {
             spout,
             fence,
             cached_resource: None,
-            sender_name: String::new(),
         })
     }
 
     pub fn set_sender_name(&mut self, name: &str) -> bool {
-        let success = self.spout.set_sender_name("");
-        if success {
-            self.sender_name = name.to_string();
-        }
-        success
+        self.spout.set_sender_name(name)
     }
 
     pub fn send_resource(&mut self, dx12_resource: ID3D12Resource) -> bool {
@@ -106,7 +100,6 @@ impl Sender {
     pub fn release_sender(&mut self) {
         self.spout.release_sender();
         self.cached_resource = None;
-        self.sender_name.clear();
     }
 }
 
