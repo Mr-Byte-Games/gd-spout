@@ -1,35 +1,41 @@
-use godot::builtin::Rid;
-use godot::classes::RenderingServer;
-use godot::classes::rendering_device::{DataFormat, DriverResource};
-use godot::prelude::*;
-use spout_sys::{DXGI_FORMAT, ID3D12Device, ID3D12Resource, ID3D12CommandQueue};
-use std::ptr::NonNull;
+use godot::{
+    builtin::Rid,
+    classes::RenderingServer,
+    classes::rendering_device::{DataFormat, DriverResource},
+    prelude::*,
+};
+use spout_sys::DXGI_FORMAT;
+use std::ffi;
+use windows::{
+    Win32::Graphics::Direct3D12::{ID3D12CommandQueue, ID3D12Device, ID3D12Resource},
+    core::Interface,
+};
 
-pub fn get_d3d12_resource_from_texture(rid: Rid) -> Option<NonNull<ID3D12Resource>> {
+pub fn get_d3d12_resource_from_texture(rid: Rid) -> Option<ID3D12Resource> {
     let mut device = RenderingServer::singleton().get_rendering_device()?;
     let resource_id = device.get_driver_resource(DriverResource::TEXTURE, rid, 0);
-    let resource = resource_id as *mut *mut ID3D12Resource;
+    let resource = resource_id as *mut *mut ffi::c_void;
 
-    NonNull::new(resource)
-        .map(|outer| unsafe { *outer.as_ptr() })
-        .and_then(NonNull::new)
+    if resource.is_null() {
+        return None;
+    }
+
+    unsafe { Interface::from_raw_borrowed(&*resource).cloned() }
 }
 
-pub fn get_d3d12_device() -> Option<NonNull<ID3D12Device>> {
+pub fn get_d3d12_device() -> Option<ID3D12Device> {
     let mut device = RenderingServer::singleton().get_rendering_device()?;
-    let logical_device_id = device.get_driver_resource(DriverResource::LOGICAL_DEVICE, Rid::Invalid, 0);
+    let device = device.get_driver_resource(DriverResource::LOGICAL_DEVICE, Rid::Invalid, 0) as *mut ffi::c_void;
 
-    NonNull::new(logical_device_id as *mut ID3D12Device)
+    unsafe { Interface::from_raw_borrowed(&device).cloned() }
 }
 
-pub fn get_d3d12_command_queue() -> Option<NonNull<ID3D12CommandQueue>> {
+pub fn get_d3d12_command_queue() -> Option<ID3D12CommandQueue> {
     let mut device = RenderingServer::singleton().get_rendering_device()?;
     let command_queue_id = device.get_driver_resource(DriverResource::COMMAND_QUEUE, Rid::Invalid, 0);
-    let resource = command_queue_id as *mut *mut ID3D12CommandQueue;
+    let resource = command_queue_id as *mut *mut ffi::c_void;
 
-    NonNull::new(resource)
-        .map(|outer| unsafe { *outer.as_ptr() })
-        .and_then(NonNull::new)
+    unsafe { Interface::from_raw_borrowed(&*resource).cloned() }
 }
 
 pub fn convert_dxgi_to_rd_data_format(dxgi_input: DXGI_FORMAT) -> DataFormat {

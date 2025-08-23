@@ -1,5 +1,6 @@
 ﻿#include "spout.h"
 #include "SpoutDX12.h"
+#include <string>
 
 SpoutDX12::SpoutDX12(ID3D12Device *device) : _spout(new spoutDX12()) {
     _spout->OpenDirectX12(device);
@@ -18,12 +19,14 @@ void SpoutDX12::release_receiver() const {
     _spout->ReleaseReceiver();
 }
 
-bool SpoutDX12::set_sender_name(const std::string &name) const {
-    return _spout->SetSenderName(name.c_str());
+bool SpoutDX12::set_sender_name(rust::Str name) const {
+    std::string c_name(name);
+    return _spout->SetSenderName(c_name.c_str());
 }
 
-void SpoutDX12::set_receiver_name(const std::string &name) const {
-    _spout->SetReceiverName(name.c_str());
+void SpoutDX12::set_receiver_name(rust::Str name) const {
+    std::string c_name(name);
+    _spout->SetReceiverName(c_name.c_str());
 }
 
 bool SpoutDX12::send_dx11_resource(ID3D11Resource *resource) const {
@@ -69,6 +72,3 @@ std::unique_ptr<SpoutDX12> new_spout_dx12(ID3D12Device *device) {
     return std::make_unique<SpoutDX12>(device);
 }
 
-std::unique_ptr<SpoutDX12> new_spout_dx12_with_queue(ID3D12Device *device, ID3D12CommandQueue *commandQueue) {
-    return std::make_unique<SpoutDX12>(device, commandQueue);
-}

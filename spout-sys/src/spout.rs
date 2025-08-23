@@ -1,8 +1,5 @@
 #![cfg(target_os = "windows")]
 
-use cxx::{UniquePtr, let_cxx_string};
-use std::ptr::NonNull;
-
 #[cxx::bridge]
 mod ffi {
     #[derive(Debug, Copy, Clone)]
@@ -141,7 +138,11 @@ mod ffi {
 
         // Raw C++ bindings - no wrapper logic
         unsafe fn send_dx11_resource(self: &SpoutDX12, resource: *mut ID3D11Resource) -> bool;
-        unsafe fn wrap_dx12_resource(self: &SpoutDX12, dx12_resource: *mut ID3D12Resource, dx11_resource: *mut *mut ID3D11Resource) -> bool;
+        unsafe fn wrap_dx12_resource(
+            self: &SpoutDX12,
+            dx12_resource: *mut ID3D12Resource,
+            dx11_resource: *mut *mut ID3D11Resource,
+        ) -> bool;
         unsafe fn receive_dx12_resource(self: &SpoutDX12, resource: *mut *mut ID3D12Resource) -> bool;
         unsafe fn create_dx12_texture(
             self: &SpoutDX12,
@@ -150,8 +151,8 @@ mod ffi {
             height: u32,
             resource: *mut *mut ID3D12Resource,
         ) -> bool;
-        fn set_sender_name(self: &SpoutDX12, name: &CxxString) -> bool;
-        fn set_receiver_name(self: &SpoutDX12, name: &CxxString);
+        fn set_sender_name(self: &SpoutDX12, name: &str) -> bool;
+        fn set_receiver_name(self: &SpoutDX12, name: &str);
         fn release_sender(self: &SpoutDX12);
         fn release_receiver(self: &SpoutDX12);
         fn get_sender_width(self: &SpoutDX12) -> u32;
@@ -160,8 +161,15 @@ mod ffi {
         fn is_updated(self: &SpoutDX12) -> bool;
 
         unsafe fn new_spout_dx12(device: *mut ID3D12Device) -> UniquePtr<SpoutDX12>;
-        unsafe fn new_spout_dx12_with_queue(device: *mut ID3D12Device, command_queue: *mut ID3D12CommandQueue) -> UniquePtr<SpoutDX12>;
     }
 }
 
-pub use ffi::*;
+use cxx::UniquePtr;
+
+pub type Spout = UniquePtr<ffi::SpoutDX12>;
+pub use ffi::DXGI_FORMAT;
+pub use ffi::ID3D11Resource;
+pub use ffi::ID3D12CommandQueue;
+pub use ffi::ID3D12Device;
+pub use ffi::ID3D12Resource;
+pub use ffi::new_spout_dx12 as new;

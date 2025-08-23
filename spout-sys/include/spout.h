@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include <memory>
-#include <string>
 #include <d3d12.h>
 #include <d3d11.h>
+#include "rust/cxx.h"
 
 struct spoutDX12;
 
@@ -16,8 +16,8 @@ public:
 
     void release_sender() const;
     void release_receiver() const;
-    bool set_sender_name(const std::string &name) const;
-    void set_receiver_name(const std::string &name) const;
+    bool set_sender_name(rust::Str name) const;
+    void set_receiver_name(rust::Str name) const;
     
     // Simplified methods - no caching or fencing logic
     bool send_dx11_resource(ID3D11Resource *resource) const;
