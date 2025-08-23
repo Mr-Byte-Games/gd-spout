@@ -101,6 +101,7 @@ impl D3D12SpoutReceiver {
 
         let data_format = convert_dxgi_to_rd_data_format(self.spout.get_sender_format());
 
+        // TODO: Do I just copy from this image to one owned by Godot via a GPU only copy?
         self.rd_texture_rid = rendering_device.texture_create_from_extension(
             TextureType::TYPE_2D,
             data_format,

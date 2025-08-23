@@ -1,9 +1,8 @@
-use godot::prelude::*;
-use std::error::Error;
-
 #[cfg(target_os = "windows")]
 use super::dx12;
 use super::no_op;
+use godot::prelude::*;
+use std::error::Error;
 
 pub trait SpoutSender {
     fn set_sender_name(&mut self, name: &str);

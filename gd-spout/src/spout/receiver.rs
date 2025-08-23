@@ -1,4 +1,6 @@
-use crate::spout::{dx12, no_op};
+#[cfg(target_os = "windows")]
+use super::dx12;
+use super::no_op;
 use godot::prelude::*;
 use std::error::Error;
 
