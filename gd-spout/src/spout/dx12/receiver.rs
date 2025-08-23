@@ -1,4 +1,6 @@
-use crate::spout::dx12::godot::{convert_dxgi_to_rd_data_format, get_d3d12_device};
+use crate::spout::dx12::godot::{
+    convert_dxgi_to_rd_data_format, copy_rendering_device_texture, create_texture, get_d3d12_device,
+};
 use crate::spout::receiver::SpoutReceiver;
 use godot::classes::RenderingServer;
 use godot::classes::rendering_device::{TextureSamples, TextureType, TextureUsageBits};
@@ -10,8 +12,9 @@ use windows::core::Interface;
 
 pub struct D3D12SpoutReceiver {
     spout: Spout,
-    rd_texture_rid: Rid,
-    rs_texture_rid: Rid,
+    receiver_rd_rid: Rid,
+    external_rd_rid: Rid,
+    external_rs_rid: Rid,
     texture_resource: Option<NonNull<ID3D12Resource>>,
     device: ID3D12Device,
 }
@@ -34,8 +37,9 @@ impl D3D12SpoutReceiver {
 
         Ok(Box::new(Self {
             spout,
-            rs_texture_rid,
-            rd_texture_rid: Rid::Invalid,
+            external_rs_rid: rs_texture_rid,
+            external_rd_rid: Rid::Invalid,
+            receiver_rd_rid: Rid::Invalid,
             texture_resource: None,
             device,
         }))
@@ -44,7 +48,7 @@ impl D3D12SpoutReceiver {
 
 impl SpoutReceiver for D3D12SpoutReceiver {
     fn rid(&self) -> Rid {
-        self.rs_texture_rid
+        self.external_rs_rid
     }
 
     fn set_sender_name(&mut self, name: &str) {
@@ -60,7 +64,18 @@ impl SpoutReceiver for D3D12SpoutReceiver {
     }
 
     fn update_resource(&mut self) -> bool {
+        let rendering_server = RenderingServer::singleton();
+        let Some(mut rendering_device) = rendering_server.get_rendering_device() else {
+            godot_error!("Rendering device was null.");
+            return false;
+        };
+
         let Some(resource) = self.update_spout_resource() else {
+            if let Err(err) =
+                copy_rendering_device_texture(&mut rendering_device, self.receiver_rd_rid, self.external_rd_rid)
+            {
+                godot_error!("error copying rendering device texture: {}", err);
+            }
             return false;
         };
 
@@ -102,7 +117,7 @@ impl D3D12SpoutReceiver {
         let data_format = convert_dxgi_to_rd_data_format(self.spout.get_sender_format());
 
         // TODO: Do I just copy from this image to one owned by Godot via a GPU only copy?
-        self.rd_texture_rid = rendering_device.texture_create_from_extension(
+        self.receiver_rd_rid = rendering_device.texture_create_from_extension(
             TextureType::TYPE_2D,
             data_format,
             TextureSamples::SAMPLES_1,
@@ -113,7 +128,15 @@ impl D3D12SpoutReceiver {
             0,
             1,
         );
-        self.rs_texture_rid = rendering_server.texture_rd_create(self.rd_texture_rid);
+
+        self.external_rd_rid = match create_texture(&mut rendering_device, self.receiver_rd_rid) {
+            Ok(rid) => rid,
+            Err(err) => {
+                godot_error!("Error creating texture: {}", err);
+                return;
+            }
+        };
+        self.external_rs_rid = rendering_server.texture_rd_create(self.external_rd_rid);
     }
 
     fn free_godot_resources(&mut self) {
@@ -123,14 +146,19 @@ impl D3D12SpoutReceiver {
             return;
         };
 
-        if self.rs_texture_rid.is_valid() {
-            rendering_server.free_rid(self.rs_texture_rid);
-            self.rs_texture_rid = Rid::Invalid;
+        if self.external_rs_rid.is_valid() {
+            rendering_server.free_rid(self.external_rs_rid);
+            self.external_rs_rid = Rid::Invalid;
         }
 
-        if self.rd_texture_rid.is_valid() {
-            rendering_device.free_rid(self.rd_texture_rid);
-            self.rd_texture_rid = Rid::Invalid;
+        if self.external_rd_rid.is_valid() {
+            rendering_server.free_rid(self.external_rd_rid);
+            self.external_rd_rid = Rid::Invalid;
+        }
+
+        if self.receiver_rd_rid.is_valid() {
+            rendering_device.free_rid(self.receiver_rd_rid);
+            self.receiver_rd_rid = Rid::Invalid;
         }
     }
 }

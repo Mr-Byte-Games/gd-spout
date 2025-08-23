@@ -1,3 +1,5 @@
+use godot::classes::RenderingDevice;
+use godot::classes::rendering_device::TextureUsageBits;
 use godot::{
     builtin::Rid,
     classes::RenderingServer,
@@ -5,6 +7,7 @@ use godot::{
     prelude::*,
 };
 use spout_sys::DXGI_FORMAT;
+use std::error::Error;
 use std::ffi;
 use windows::{
     Win32::Graphics::Direct3D12::{ID3D12CommandQueue, ID3D12Device, ID3D12Resource},
@@ -78,4 +81,76 @@ pub fn convert_dxgi_to_rd_data_format(dxgi_input: DXGI_FORMAT) -> DataFormat {
             DataFormat::MAX
         }
     }
+}
+
+pub fn copy_rendering_device_texture(
+    rendering_device: &mut RenderingDevice,
+    source_texture_rid: Rid,
+    destination_texture: Rid,
+) -> Result<(), Box<dyn Error>> {
+    if !rendering_device.texture_is_valid(source_texture_rid) {
+        Err("source texture is not valid")?;
+    }
+
+    if !rendering_device.texture_is_valid(destination_texture) {
+        Err("destination texture is not valid")?;
+    }
+
+    let source_format = rendering_device.texture_get_format(source_texture_rid).unwrap();
+    let target_format = rendering_device.texture_get_format(destination_texture).unwrap();
+    if source_format.get_width() != target_format.get_width()
+        || source_format.get_height() != target_format.get_height()
+        || source_format.get_format() != target_format.get_format()
+    {
+        Err("source and destination format are incompatible")?;
+    }
+
+    let copy_result = rendering_device.texture_copy(
+        source_texture_rid,
+        destination_texture,
+        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(
+            source_format.get_width() as f32,
+            source_format.get_height() as f32,
+            source_format.get_depth() as f32,
+        ),
+        0,
+        0,
+        0,
+        0,
+    );
+
+    match copy_result {
+        godot::global::Error::OK => Ok(()),
+        error => Err(format!("error copying texture {error:?}"))?,
+    }
+}
+
+pub fn create_texture(rendering_device: &mut RenderingDevice, source: Rid) -> Result<Rid, Box<dyn Error>> {
+    let source_format = rendering_device
+        .texture_get_format(source)
+        .ok_or("source texture format not found")?;
+
+    let mut texture_format = godot::classes::RdTextureFormat::new_gd();
+    texture_format.set_format(source_format.get_format());
+    texture_format.set_texture_type(source_format.get_texture_type());
+    texture_format.set_width(source_format.get_width());
+    texture_format.set_height(source_format.get_height());
+    texture_format.set_depth(source_format.get_depth());
+    texture_format.set_array_layers(source_format.get_array_layers());
+    texture_format.set_mipmaps(source_format.get_mipmaps());
+
+    texture_format.set_usage_bits(
+        TextureUsageBits::CAN_COPY_FROM_BIT | TextureUsageBits::CAN_COPY_TO_BIT | TextureUsageBits::SAMPLING_BIT,
+    );
+
+    let texture_view = godot::classes::RdTextureView::new_gd();
+
+    let new_rid = rendering_device.texture_create(&texture_format, &texture_view);
+    if new_rid == Rid::Invalid {
+        Err("unable to create texture")?;
+    }
+
+    Ok(new_rid)
 }
