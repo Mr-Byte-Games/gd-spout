@@ -45,6 +45,7 @@ impl SpoutSender for D3D12SpoutSender {
 pub struct Sender {
     spout: Spout,
     fence: Fence,
+    // TODO: Should these be Rust native COM types that are owned?
     cached_dx12_resource: Option<NonNull<spout_sys::ID3D12Resource>>,
     cached_dx11_resource: Option<NonNull<ID3D11Resource>>,
 }
@@ -83,7 +84,7 @@ impl Sender {
 
         let mut dx11_resource: *mut ID3D11Resource = std::ptr::null_mut();
 
-        let success = unsafe { self.spout.wrap_dx12_resource(dx12_resource, &mut dx11_resource) };
+        let success = unsafe { self.spout.wrap_dx12_resource(dx12_resource.as_ptr(), &mut dx11_resource) };
 
         if !success || dx11_resource.is_null() {
             godot_error!("Failed to wrap D3D12 resource for sending");
