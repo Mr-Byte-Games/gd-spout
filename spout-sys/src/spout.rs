@@ -147,8 +147,6 @@ mod ffi {
         unsafe fn create_dx12_texture(
             self: &SpoutDX12,
             device: *mut ID3D12Device,
-            width: u32,
-            height: u32,
             resource: *mut *mut ID3D12Resource,
         ) -> bool;
         fn set_sender_name(self: &SpoutDX12, name: &str) -> bool;

@@ -57,11 +57,11 @@ bool SpoutDX12::receive_dx12_resource(ID3D12Resource **resource) const {
     return _spout->ReceiveDX12Resource(resource);
 }
 
-bool SpoutDX12::create_dx12_texture(ID3D12Device *device, unsigned int width, unsigned int height, ID3D12Resource **resource) const {
+bool SpoutDX12::create_dx12_texture(ID3D12Device *device, ID3D12Resource **resource) const {
     return _spout->CreateDX12texture(
         device,
-        width,
-        height,
+        _spout->GetSenderWidth(),
+        _spout->GetSenderHeight(),
         D3D12_RESOURCE_STATE_COPY_DEST,
         _spout->GetSenderFormat(),
         resource

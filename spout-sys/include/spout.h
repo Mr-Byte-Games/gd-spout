@@ -29,7 +29,7 @@ public:
     bool is_updated() const;
     
     bool receive_dx12_resource(ID3D12Resource **resource) const;
-    bool create_dx12_texture(ID3D12Device *device, unsigned int width, unsigned int height, ID3D12Resource **resource) const;
+    bool create_dx12_texture(ID3D12Device *device, ID3D12Resource **resource) const;
 
 private:
     spoutDX12 *_spout;

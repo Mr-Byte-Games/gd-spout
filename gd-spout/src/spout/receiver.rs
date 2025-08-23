@@ -1,4 +1,4 @@
-use crate::spout::no_op;
+use crate::spout::{dx12, no_op};
 use godot::prelude::*;
 use std::error::Error;
 
@@ -12,8 +12,8 @@ pub trait SpoutReceiver {
 
 pub fn create_receiver(driver_name: &str) -> Box<dyn SpoutReceiver> {
     let receiver = match driver_name {
-        // #[cfg(target_os = "windows")]
-        // "d3d12" => dx12::D3D12SpoutReceiver::new(),
+        #[cfg(target_os = "windows")]
+        "d3d12" => dx12::D3D12SpoutReceiver::new(),
         _ => Ok(no_op::NoOpReceiver::new()),
     };
 
