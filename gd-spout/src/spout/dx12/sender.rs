@@ -39,7 +39,7 @@ impl D3D12SpoutSender {
     }
 }
 
-impl Drop for Sender {
+impl Drop for D3D12SpoutSender {
     fn drop(&mut self) {
         self.release();
     }
@@ -71,8 +71,7 @@ impl D3D12SpoutSender {
             return false;
         }
 
-        let mut dx12_resource =
-            unsafe { NonNull::new_unchecked(dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource) };
+        let dx12_resource = unsafe { NonNull::new_unchecked(dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource) };
 
         if let Some(cached_dx12) = self.cached_dx12_resource
             && cached_dx12.as_ptr() == dx12_resource.as_ptr()
