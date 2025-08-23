@@ -3,7 +3,7 @@ use crate::spout::sender::SpoutSender;
 use godot::prelude::*;
 use spout_sys::{ID3D11Resource, Spout};
 use std::ptr::NonNull;
-use windows::Win32::Graphics::Direct3D12::{ID3D12CommandQueue, ID3D12Device, ID3D12Resource};
+use windows::Win32::Graphics::Direct3D12::ID3D12Resource;
 use windows::core::Interface;
 
 pub struct D3D12SpoutSender {
