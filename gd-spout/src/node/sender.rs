@@ -1,12 +1,6 @@
 use godot::classes::{Engine, Node, RenderingServer, Texture2D};
 use godot::prelude::*;
-
 use crate::spout;
-use crate::spout::sender::create_sender;
-
-thread_local! {
-    static RENDERING_DRIVER_D3D12: GString = "d3d12".into();
-}
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
@@ -17,7 +11,7 @@ pub struct SpoutSender {
     #[export]
     texture: Option<Gd<Texture2D>>,
     callback: Option<Callable>,
-    spout: Option<Box<dyn spout::sender::SpoutSender>>,
+    spout: Option<Box<dyn spout::SpoutSender>>,
     base: Base<Node>,
 }
 
@@ -50,7 +44,7 @@ impl INode for SpoutSender {
             .get_current_rendering_driver_name()
             .to_string();
 
-        let mut spout = create_sender(&driver_name);
+        let mut spout = spout::create_sender(&driver_name);
         spout.set_sender_name(&self.name.to_string());
         self.spout = Some(spout);
 
@@ -78,7 +72,7 @@ impl SpoutSender {
         };
 
         let Some(texture) = &self.texture else {
-            godot_error!("No texture available.");
+            godot_error!("No texture set.");
             return;
         };
 
