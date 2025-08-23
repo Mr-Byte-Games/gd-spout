@@ -45,7 +45,8 @@ impl SpoutSender for D3D12SpoutSender {
 pub struct Sender {
     spout: Spout,
     fence: Fence,
-    cached_resource: Option<NonNull<ID3D11Resource>>,
+    cached_dx12_resource: Option<NonNull<spout_sys::ID3D12Resource>>,
+    cached_dx11_resource: Option<NonNull<ID3D11Resource>>,
 }
 
 impl Sender {
@@ -57,7 +58,7 @@ impl Sender {
         Ok(Self {
             spout,
             fence,
-            cached_resource: None,
+            cached_dx11_resource: None,
         })
     }
 
@@ -71,20 +72,18 @@ impl Sender {
             return false;
         }
 
-        // TODO: Check if incoming resource has changed.
+        let mut dx12_resource = NonNull::new_unchecked(dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource);
 
-        if let Some(ref mut cached_resource) = self.cached_resource {
+        if let Some(cached_dx12) = self.cached_dx12_resource
+            && cached_dx12.as_ptr() == dx12_resource.as_ptr()
+            && let Some(ref mut cached_resource) = self.cached_dx11_resource
+        {
             return unsafe { self.spout.send_dx11_resource(cached_resource.as_mut()) };
         }
 
         let mut dx11_resource: *mut ID3D11Resource = std::ptr::null_mut();
 
-        let success = unsafe {
-            self.spout.wrap_dx12_resource(
-                dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource,
-                &mut dx11_resource,
-            )
-        };
+        let success = unsafe { self.spout.wrap_dx12_resource(dx12_resource, &mut dx11_resource) };
 
         if !success || dx11_resource.is_null() {
             godot_error!("Failed to wrap D3D12 resource for sending");
@@ -92,14 +91,15 @@ impl Sender {
         }
 
         let dx11_resource = unsafe { NonNull::new_unchecked(dx11_resource) };
-        self.cached_resource = Some(dx11_resource);
+        self.cached_dx11_resource = Some(dx11_resource);
+        self.cached_dx12_resource = Some(dx12_resource);
 
         unsafe { self.spout.send_dx11_resource(dx11_resource.as_ptr()) }
     }
 
     pub fn release_sender(&mut self) {
         self.spout.release_sender();
-        self.cached_resource = None;
+        self.cached_dx11_resource = None;
     }
 }
 

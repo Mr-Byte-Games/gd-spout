@@ -140,7 +140,7 @@ mod ffi {
         unsafe fn send_dx11_resource(self: &SpoutDX12, resource: *mut ID3D11Resource) -> bool;
         unsafe fn wrap_dx12_resource(
             self: &SpoutDX12,
-            dx12_resource: *mut ID3D12Resource,
+            dx12_resource: std::ptr::NonNull<ID3D12Resource>,
             dx11_resource: *mut *mut ID3D11Resource,
         ) -> bool;
         unsafe fn receive_dx12_resource(self: &SpoutDX12, resource: *mut *mut ID3D12Resource) -> bool;
