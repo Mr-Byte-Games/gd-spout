@@ -59,6 +59,7 @@ impl Sender {
         Ok(Self {
             spout,
             fence,
+            cached_dx12_resource: None,
             cached_dx11_resource: None,
         })
     }
@@ -73,7 +74,7 @@ impl Sender {
             return false;
         }
 
-        let mut dx12_resource = NonNull::new_unchecked(dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource);
+        let mut dx12_resource = unsafe { NonNull::new_unchecked(dx12_resource.as_raw() as *mut spout_sys::ID3D12Resource) };
 
         if let Some(cached_dx12) = self.cached_dx12_resource
             && cached_dx12.as_ptr() == dx12_resource.as_ptr()

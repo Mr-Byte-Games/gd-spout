@@ -1,8 +1,9 @@
-﻿use godot::classes::gpu_particles_collision_sdf_3d::Resolution;
-use windows::Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0};
-use windows::Win32::Graphics::Direct3D12::{D3D12_FENCE_FLAG_NONE, ID3D12CommandQueue, ID3D12Device, ID3D12Fence};
-use windows::Win32::System::Threading::{CreateEventW, INFINITE, WaitForSingleObject};
-use windows::core::{HRESULT, Result};
+﻿use windows::{
+    Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0},
+    Win32::Graphics::Direct3D12::{D3D12_FENCE_FLAG_NONE, ID3D12CommandQueue, ID3D12Device, ID3D12Fence},
+    Win32::System::Threading::{CreateEventW, INFINITE, WaitForSingleObject},
+    core::{HRESULT, Result}
+};
 
 pub struct Fence {
     fence: ID3D12Fence,
