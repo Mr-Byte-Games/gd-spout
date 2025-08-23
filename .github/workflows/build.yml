@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -74,12 +74,3 @@ jobs:
       - name: Build (Release)
         if: ${{ startsWith(matrix.target, 'release') }}
         run: cargo build --release --verbose
-      - name: Archive Artifacts
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: lib-${{ matrix.platform }}-${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/*.dll
-            target/${{ matrix.target }}/*.dylib
-            target/${{ matrix.target }}/*.so

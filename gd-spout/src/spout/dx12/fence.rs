@@ -1,7 +1,8 @@
-﻿use windows::Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0};
+﻿use godot::classes::gpu_particles_collision_sdf_3d::Resolution;
+use windows::Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0};
 use windows::Win32::Graphics::Direct3D12::{D3D12_FENCE_FLAG_NONE, ID3D12CommandQueue, ID3D12Device, ID3D12Fence};
 use windows::Win32::System::Threading::{CreateEventW, INFINITE, WaitForSingleObject};
-use windows::core::{HRESULT, Result as WinResult};
+use windows::core::{HRESULT, Result};
 
 pub struct Fence {
     fence: ID3D12Fence,
@@ -11,7 +12,7 @@ pub struct Fence {
 }
 
 impl Fence {
-    pub fn new(device: &ID3D12Device, command_queue: ID3D12CommandQueue) -> WinResult<Self> {
+    pub fn new(device: &ID3D12Device, command_queue: ID3D12CommandQueue) -> Result<Self> {
         let fence: ID3D12Fence = unsafe { device.CreateFence(0, D3D12_FENCE_FLAG_NONE)? };
 
         let fence_event = unsafe { CreateEventW(None, false, false, None)? };
@@ -24,8 +25,7 @@ impl Fence {
         })
     }
 
-    pub fn wait_for_gpu(&mut self) -> WinResult<()> {
-        // Signal the fence
+    pub fn wait_for_gpu(&mut self) -> Result<()> {
         unsafe {
             self.command_queue.Signal(&self.fence, self.fence_value)?;
         }
