@@ -24,8 +24,6 @@ impl D3D12SpoutSender {
             return Err("Unable to obtain D3D12 Command Queue".into());
         };
 
-        let spout_sender = Sender::new(device, command_queue)?;
-
         let spout = unsafe { spout_sys::new(device.as_raw() as *mut spout_sys::ID3D12Device) };
         let fence =
             Fence::new(&device, command_queue).map_err(|e| format!("Failed to create sender fence manager: {}", e))?;
