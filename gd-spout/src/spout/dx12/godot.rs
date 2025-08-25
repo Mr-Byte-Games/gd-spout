@@ -96,8 +96,13 @@ pub fn copy_rendering_device_texture(
         Err("destination texture is not valid")?;
     }
 
-    let source_format = rendering_device.texture_get_format(source_texture_rid).unwrap();
-    let target_format = rendering_device.texture_get_format(destination_texture).unwrap();
+    let source_format = rendering_device
+        .texture_get_format(source_texture_rid)
+        .ok_or("unable to get texture format")?;
+    let target_format = rendering_device
+        .texture_get_format(destination_texture)
+        .ok_or("unable to get texture format")?;
+
     if source_format.get_width() != target_format.get_width()
         || source_format.get_height() != target_format.get_height()
         || source_format.get_format() != target_format.get_format()
@@ -105,26 +110,10 @@ pub fn copy_rendering_device_texture(
         Err("source and destination format are incompatible")?;
     }
 
-    let copy_result = rendering_device.texture_copy(
-        source_texture_rid,
-        destination_texture,
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(
-            source_format.get_width() as f32,
-            source_format.get_height() as f32,
-            source_format.get_depth() as f32,
-        ),
-        0,
-        0,
-        0,
-        0,
-    );
+    let data = rendering_device.texture_get_data(source_texture_rid, 0);
+    rendering_device.texture_update(destination_texture, 0, &data);
 
-    match copy_result {
-        godot::global::Error::OK => Ok(()),
-        error => Err(format!("error copying texture {error:?}"))?,
-    }
+    Ok(())
 }
 
 pub fn create_texture(rendering_device: &mut RenderingDevice, source: Rid) -> Result<Rid, Box<dyn Error>> {
@@ -140,9 +129,8 @@ pub fn create_texture(rendering_device: &mut RenderingDevice, source: Rid) -> Re
     texture_format.set_depth(source_format.get_depth());
     texture_format.set_array_layers(source_format.get_array_layers());
     texture_format.set_mipmaps(source_format.get_mipmaps());
-
     texture_format.set_usage_bits(
-        TextureUsageBits::CAN_COPY_FROM_BIT | TextureUsageBits::CAN_COPY_TO_BIT | TextureUsageBits::SAMPLING_BIT,
+        TextureUsageBits::CAN_COPY_TO_BIT | TextureUsageBits::SAMPLING_BIT | TextureUsageBits::CAN_UPDATE_BIT,
     );
 
     let texture_view = godot::classes::RdTextureView::new_gd();

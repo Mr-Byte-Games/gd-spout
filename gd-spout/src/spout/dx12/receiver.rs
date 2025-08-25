@@ -4,6 +4,7 @@ use crate::spout::dx12::godot::{
 use crate::spout::receiver::SpoutReceiver;
 use godot::classes::RenderingServer;
 use godot::classes::rendering_device::{TextureSamples, TextureType, TextureUsageBits};
+use godot::classes::rendering_server::TextureLayeredType;
 use godot::prelude::*;
 use spout_sys::{ID3D12Resource, Spout};
 use std::ptr::NonNull;
@@ -76,6 +77,7 @@ impl SpoutReceiver for D3D12SpoutReceiver {
             {
                 godot_error!("error copying rendering device texture: {}", err);
             }
+
             return false;
         };
 
@@ -121,11 +123,11 @@ impl D3D12SpoutReceiver {
             TextureType::TYPE_2D,
             data_format,
             TextureSamples::SAMPLES_1,
-            TextureUsageBits::SAMPLING_BIT,
+            TextureUsageBits::SAMPLING_BIT | TextureUsageBits::CAN_COPY_FROM_BIT,
             texture.as_ptr() as u64,
             self.spout.get_sender_width() as u64,
             self.spout.get_sender_height() as u64,
-            0,
+            1,
             1,
         );
 
@@ -136,7 +138,11 @@ impl D3D12SpoutReceiver {
                 return;
             }
         };
-        self.external_rs_rid = rendering_server.texture_rd_create(self.external_rd_rid);
+
+        self.external_rs_rid = rendering_server
+            .texture_rd_create_ex(self.external_rd_rid)
+            .layer_type(TextureLayeredType::LAYERED_2D_ARRAY)
+            .done();
     }
 
     fn free_godot_resources(&mut self) {
